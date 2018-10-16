@@ -1,6 +1,8 @@
 const host = {
 	domain: "127.0.0.1",
-	path: "/dayzrp.zip"
+	path: "/dayzrp.zip",
+	gameip: "s1.dayzrp.com",
+	gameport: "2300"
 }
 
 const {app, BrowserWindow, ipcMain} = require("electron");
@@ -12,6 +14,9 @@ const {download} = require("electron-dl")
 const rimraf = require('rimraf')
 const http = require('http')
 const extract = require('extract-zip')
+const gamedig = require('gamedig')
+
+let dlServerUp = true;
 
 //Figure out if the settings exists and if not, create the default settings
 const spath = path.join(app.getPath('userData'), 'settings.json')
@@ -54,7 +59,7 @@ function createWindow () {
 		protocol: 'file:',
 		slashes: true
 	}))
-
+	
 	ipcMain.on("download", (event, info) => {
 		
 		//save shit
@@ -88,13 +93,25 @@ function createWindow () {
 						settingsData.version = version
 						settings = JSON.stringify(settingsData)
 						fs.writeFile(spath, settings, (err) => {if (err) throw err})
-						mainWindow.webContents.send("download complete", {version: settingsData.version})
+						mainWindow.webContents.send("download complete", {version: settingsData.version, ip: host.gameip, port: host.gameport, join: info.join})
 					})
+				})
+				.catch((e) => {
+					dlServerUp = false
+					mainWindow.webContents.send("serverdown", {download: true})
 				})
 			} else {
 				console.log("no mismatch found");
-				mainWindow.webContents.send("download complete", {version: settingsData.version})
+				mainWindow.webContents.send("download complete", {version: settingsData.version, ip: host.gameip, port: host.gameport, join: info.join})
 			}
+		})
+		req.on('abort',(e) => {
+			dlServerUp = false
+			mainWindow.webContents.send("serverdown", {download: true})
+		})
+		req.on('error', (e) => {
+			dlServerUp = false
+			mainWindow.webContents.send("serverdown", {download: true})
 		})
 		req.end()
 	})
@@ -103,6 +120,22 @@ function createWindow () {
 
 	mainWindow.on('closed', function () {
 		mainWindow = null
+	})
+	ipcMain.on("refresh", (event, info) => {
+		gamedig.query({
+			type: 'dayz',
+			host: host.gameip
+		},
+		function(e,state) {
+			if(e) {
+				mainWindow.webContents.send("serverdown", {download: false})
+			} else {
+				if (dlServerUp)
+					mainWindow.webContents.send("serverup", state)
+				else
+					mainWindow.webContents.send("serverdown", {download: true})
+			}
+		})
 	})
 }
 

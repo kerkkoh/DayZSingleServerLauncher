@@ -16,24 +16,47 @@ $("#minim").click(() => {
 //Handle events from main.js
 ipcRenderer.on("download complete", (event, data) => {
 	$( "#version" ).text(data.version);
-	//launchGame();
-	console.log("Would launch game here");
+	launchGame(data.ip, data.port, data.join);
+});
+ipcRenderer.on("serverup", (event, data) => {
+	$( "#status" ).text(`${data.name} (${data.raw.numplayers} Players)`);
+});
+ipcRenderer.on("serverdown", (event, data) => {
+	if (data.download)
+		$( "#status" ).text("Mod download server seems to be down");
+	else
+		$( "#status" ).text("Server seems to be down");
 });
 
-const launchGame = () => {
+const launchGame = (ip, port, join) => {
 	let dayzpath = $('#dayzpath').val();
 	let charname = $('#charname').val();
-	let file = `"${dayzpath}\\DayZ_BE.exe" "-name=${charname}" -mod=dayzrp -connect=s1.dayzrp.com -port=2300`;
+	
+	let file = `"${dayzpath}\\DayZ_BE.exe" "-name=${charname}" -mod=dayzrp -connect=${ip} -port=${port}`;
+	if (!join) file = `"${dayzpath}\\DayZ_BE.exe" "-name=${charname}" -mod=dayzrp`;
+	
 	let path = eapp.getPath("userData") + '\\launch.bat';
 	fs.writeFile(path, file, (err) => {
 		if (err) throw err;
-		console.log(`DayZ startup file created at ${path}`);
-		child_process.exec(path, function(error, stdout, stderr) {});
+		console.log(`DayZ startup file created at ${path} with ${file}`);
+		//child_process.exec(path, function(error, stdout, stderr) {});
 	});
-}
+};
 $( "#launch" ).click(() => {
 	ipcRenderer.send("download", {
 		dayzpath: $('#dayzpath').val(),
-		charname: $('#charname').val()
+		charname: $('#charname').val(),
+		join: false
 	});
 });
+$( "#join" ).click(() => {
+	ipcRenderer.send("download", {
+		dayzpath: $('#dayzpath').val(),
+		charname: $('#charname').val(),
+		join: true
+	});
+});
+$( "#refresh" ).click(() => {
+	ipcRenderer.send("refresh", {});
+});
+ipcRenderer.send("refresh", {});

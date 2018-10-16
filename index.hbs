@@ -33,15 +33,18 @@
 				</div>
 			</div>
 			<div class="btns col-4 text-right">
+				<button type="button" class="btn btn-primary btn-block" id="join">Join server</button>
 				<button type="button" class="btn btn-primary btn-block" id="launch">Launch DayZ</button>
+				<button type="button" class="btn btn-primary btn-block" id="refresh">Refresh Status</button>
 				<button type="button" class="btn btn-primary btn-block">Mod Version: <span id="version">{{#if installed}}{{data.version}}{{else}}None{{/if}}</span></button>
+				<p id="status"></p>
 			</div>
 	</div>
 	</div><!--container-fluid-->
 
 	<script src="bootstrap/js/jquery.min.js"></script>
-	<script src="bootstrap/js/tether.min.js"></script>
-	<script src="bootstrap/js/bootstrap.min.js"></script>
+	<!--<script src="bootstrap/js/tether.min.js"></script>-->
+	<script src="bootstrap/js/bootstrap.bundle.min.js"></script>
 
 	</body>
 	<script>
