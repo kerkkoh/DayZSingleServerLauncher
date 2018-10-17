@@ -15,9 +15,25 @@ $("#minim").click(() => {
 
 //Handle events from main.js
 ipcRenderer.on("download complete", (event, data) => {
+	$("#progressdiv").hide();
+	$( "#dlstatus" ).text("Download completed. You now have mod version v"+data.version);
 	$( "#version" ).text(data.version);
 	launchGame(data.ip, data.port, data.join);
 });
+ipcRenderer.on("download progress", (event, progress) => {
+	$("#dlrow").show();
+	$( "#dlstatus" ).text("Downloading...");
+    console.log(event);
+    console.log(progress);
+    const cleanProgressInPercentages = Math.floor(progress * 100);
+	if (cleanProgressInPercentages<=100) {
+		$("#progress").css( "width", cleanProgressInPercentages );
+	} else {
+		$("#progress").hide();
+	}
+	
+});
+
 ipcRenderer.on("serverup", (event, data) => {
 	$( "#status" ).text(`${data.name} (${data.raw.numplayers} Players)`);
 });
@@ -39,7 +55,7 @@ const launchGame = (ip, port, join) => {
 	fs.writeFile(path, file, (err) => {
 		if (err) throw err;
 		console.log(`DayZ startup file created at ${path} with ${file}`);
-		//child_process.exec(path, function(error, stdout, stderr) {});
+		child_process.exec(path, function(error, stdout, stderr) {});
 	});
 };
 $( "#launch" ).click(() => {
